@@ -1,8 +1,19 @@
+import gzip
 import os
 import re
 import shutil
 from glob import glob as local_glob
 from pathlib import Path
+
+
+def is_gz(fname):
+    return fname.endswith('.gz')
+
+
+def smart_open(fname, mode='r', compressed=None):
+    if compressed is None:
+        compressed = is_gz(fname)
+    return gzip.open(fname, mode) if compressed else open(fname, mode)
 
 
 def exists(fname):
@@ -23,6 +34,11 @@ def change_ext(path, ext):
 
 def clear_ext(path):
     return change_ext(path, '')
+
+
+def strip_ext(name):
+    return name.split('.')[0]
+
 
 
 def abspath(path):

@@ -7,13 +7,14 @@ from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import CSVLogger
 from sklearn.model_selection import ParameterGrid
 
-from core import fs
+import fs
+from .descriptor import UserNavDescriptor, CIDDescriptor
 from .model import MultiTaskLanguageModel, RollingAverageMultiTaskLanguageModel
 from .settings import sigir_data_dir
 
 
 class GridSearch:
-    def __init__(self, job_name, exp_name, grid: ParameterGrid, device, batch_size, data_size, max_epochs=250):
+    def __init__(self, exp_name, grid: ParameterGrid, device, batch_size, data_size, max_epochs=250):
         self.exp_name = exp_name
         self.device = device
         self.batch_size = batch_size
@@ -101,6 +102,16 @@ class GRUGridSearch(GridSearch):
         return model
 
 
+class RollingGridSearch(GridSearch):
+    def instance_model(self, hp):
+        sku_embedder_fname = fs.join(sigir_data_dir, 'train/sku_embeddings_avg_desc.pkl')
+        model = RollingAverageMultiTaskLanguageModel(
+            sku_embedder_fname, self.device, max_epochs=self.max_epochs,
+            data_size=self.data_size, batch_size=self.batch_size, **hp
+        )
+        return model
+
+
 def load_trials(path):
     trials = []
     for fname in fs.glob(fs.join(path, '*.json')):
@@ -166,3 +177,35 @@ def build_runs_df(trials, mode='max', val_cols=None):
     runs_df['score'] = 2 * runs_df[val_cols].prod(axis=1) / runs_df[val_cols].sum(axis=1)
     runs_df = runs_df.sort_values('score', ascending=False)
     return runs_df
+
+
+def get_checkpoints_metrics(run, run_df):
+    metrics = {}
+    for checkpoint_fname in fs.ls(run['log'], 'checkpoints'):
+        step = int(fs.strip_ext(fs.name(checkpoint_fname)).split('-')[1].split('=')[1])
+        metrics[checkpoint_fname] = run_df[SIGIR_VAL_COLS + ['score']].loc[step].dropna().iloc[0]
+    return metrics
+
+
+def load_descriptors(cat2vec_fname, mtl_cls, run, pooling_strategy, device='cuda', batch_size=4096):
+    run_df = get_run_df(run)
+    checkpoint_metrics = get_checkpoints_metrics(run, run_df)
+    checkpoint_fname, _ = max(checkpoint_metrics.items(), key=lambda x: x[1].score)
+
+    desc = UserNavDescriptor(
+        checkpoint_fname, cat2vec_fname, pooling_strategy=pooling_strategy,
+        verbose=True, device=device, mtl_cls=mtl_cls, batch_size=batch_size
+    )
+    desc.sync_resources()
+    cid_desc = CIDDescriptor(
+        checkpoint_fname, cat2vec_fname, item_key='candidate',
+        verbose=True, device=device, mtl_cls=mtl_cls, batch_size=batch_size
+    )
+    cid_desc._model = desc._model
+    return cid_desc, desc, checkpoint_fname
+
+
+def get_run_df(run):
+    df = pd.read_csv(fs.join(run['log'], 'metrics.csv')).set_index('step')
+    df['score'] = 2 * df[SIGIR_VAL_COLS].prod(axis=1) / df[SIGIR_VAL_COLS].sum(axis=1)
+    return df

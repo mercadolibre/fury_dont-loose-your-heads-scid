@@ -1,6 +1,8 @@
+import io
+
 import torch
 from torch import storage
-import io
+
 
 def f(b):
     return torch.load(io.BytesIO(b), map_location=torch.device('cpu'))
@@ -10,29 +12,22 @@ storage._load_from_bytes = f
 
 from itertools import groupby
 
-from core.imports import *
 from sklearn.metrics import roc_auc_score, average_precision_score
 
-from core.sigir import utils, search
-from sklearn.pipeline import make_union, make_pipeline
+from sklearn.pipeline import make_pipeline
 
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
-from core.sigir.descriptor import UserNavDescriptor, PoolingStrategy, CIDDescriptor
-from lightgbm import LGBMClassifier
+from ..scid.descriptor import PoolingStrategy
 
-from core.sigir.grid_search import load_trials, build_runs_df
-from core.sigir.model import RollingAverageMultiTaskLanguageModel, MultiTaskLanguageModel
-from datetime import datetime
+from ..scid.grid_search import load_trials, build_runs_df
+from ..scid.model import RollingAverageMultiTaskLanguageModel, MultiTaskLanguageModel
 import next_item_prediction as nip
 
-from core.serialization import SerializedIterable
-from core.sigir.settings import sigir_data_dir
-from core.time_it import timeit
-from core.utils import prefix_dict
+from ..scid.settings import sigir_data_dir
+from ..scid.timeit import timeit
+from ..scid.utils import prefix_dict
 from cachetools import LRUCache
 
-from eval_top_models import load_descriptors
+from ..scid.grid_search import load_descriptors
 
 
 def get_split_Xy(split_name, n_stories=2000):

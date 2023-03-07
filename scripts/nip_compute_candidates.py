@@ -1,10 +1,13 @@
+import pickle as pkl
+from collections import defaultdict, Counter
 from itertools import chain
 from sklearn.model_selection import ParameterGrid
+from tqdm import tqdm
 
-from core.imports import *
+from ..scid import fs
 
 
-def get_cocount(it, trigger_key, any_order=False, just_next=False, include_last_evt=False):
+def get_cocount(it, trigger_key, any_order=False, just_next=False):
     cnt = defaultdict(Counter)
     used_sessions = 0
     for session in it:
@@ -13,20 +16,20 @@ def get_cocount(it, trigger_key, any_order=False, just_next=False, include_last_
         if just_next: assert not any_order
 
         last_ph_pos = None
-        if not include_last_evt:
-            for i in range(len(session) - 1, -1, -1):
-                if session[i]['product_sku_hash']:
-                    last_ph_pos = i
-                    break
+        for i in range(len(session) - 1, -1, -1):
+            if session[i]['product_sku_hash']:
+                last_ph_pos = i
+                break
 
-            # puro pageviews
-            if last_ph_pos is None: continue
+        # puro pageviews
+        if last_ph_pos is None: continue
 
         for i, e in enumerate(session):
             if not e.get(trigger_key): continue
             for j in range(0 if any_order else i + 1, len(session)):
                 if not session[j]['product_sku_hash']: continue
-                if not include_last_evt and j == last_ph_pos: break
+                # do not include the last event
+                if j == last_ph_pos: break
 
                 cnt[e[trigger_key]][session[j]['product_sku_hash']] += 1
 
@@ -53,7 +56,7 @@ def main():
     co_counts_path = fs.ensure_exists(f'co_counts/{n_stories}')
 
     grid = ParameterGrid(dict(
-#         split=['train', 'test', 'train_test'],
+        #         split=['train', 'test', 'train_test'],
         split=['eval'],
         trigger_key=['product_sku_hash', 'hashed_url'],
         any_order=[True, False],
@@ -66,7 +69,7 @@ def main():
 
     grid = list(filter(valid_cfg, grid))
 
-    for config in progress(grid, dyn_pi=False):
+    for config in tqdm(grid):
         config['n_stories'] = n_stories
         cache_fname = get_cache_fname(co_counts_path, config)
         if fs.exists(cache_fname):
@@ -83,7 +86,7 @@ def main():
 
         co_counts = get_cocount(
             data, config['trigger_key'], any_order=config['any_order'],
-            just_next=config['just_next'], include_last_evt=config['include_last_evt']
+            just_next=config['just_next'],
         )
 
         with open(cache_fname, 'wb') as f:

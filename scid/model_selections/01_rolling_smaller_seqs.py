@@ -1,6 +1,6 @@
 from sklearn.model_selection import ParameterGrid
 
-from core.sigir.grid_search import RollingGridSearch
+from ..grid_search import RollingGridSearch
 
 grid = ParameterGrid(dict(
     item_adapter_depth=[0, 1, 2, 3],
@@ -11,7 +11,6 @@ grid = ParameterGrid(dict(
 ))
 
 RollingGridSearch(
-    job_name='data/new_data',
     exp_name='rolling_smaller_sequences',
     grid=grid,
     device='cuda',

@@ -7,7 +7,6 @@ import torch
 from sklearn.base import TransformerMixin, BaseEstimator
 from torch.nn.utils.rnn import pad_sequence, pad_packed_sequence, pack_padded_sequence
 
-from core.progress import progress
 from .model import MultiTaskLanguageModel
 
 
@@ -268,3 +267,19 @@ class CIDDescriptor(MTLDescriptorBase):
         tensors.append(features.max(dim=1).values[:, None])
 
         return torch.cat(tensors, dim=1)
+
+
+metric_cols = [
+    'val_next_sku_descr_prec_at_1',
+    'val_purch_sku_descr_prec_at_1',
+    'val_next_sku_cat_prec_at_1',
+    'val_purch_sku_cat_prec_at_1',
+    'val_purch_sku_price_acc',
+    'val_next_sku_price_acc',
+    'val_will_purch_auc', 'val_this_purch_auc'
+]
+
+
+
+
+if __name__ == '__main__': main()

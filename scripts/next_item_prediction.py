@@ -1,18 +1,21 @@
-from time import time
+import numpy as np
+import json
+import pickle as pkl
+from collections import Counter
+from itertools import islice
 import csv
 from datetime import datetime
 from itertools import groupby
 from random import Random
+from time import time
 
-from lightgbm import LGBMClassifier
 from sklearn.pipeline import make_union, make_pipeline
 from tqdm import tqdm
 
-from core.env_args_parser import EnvArgsParser
-from core.imports import *
-from core.sigir import utils
-from core.sigir.utils import get_sku
 from nip_compute_candidates import get_cache_fname
+from scid import fs
+from scid.settings import sigir_data_dir
+from ..scid import utils
 
 train_cut = datetime(2019, 3, 24)
 train_cut_ts = train_cut.timestamp() * 1000
@@ -42,7 +45,7 @@ def enrich_sessions(it):
     for session in it:
         for evt in session:
             if not evt['product_sku_hash']: continue
-            evt.update(get_sku(evt['product_sku_hash']))
+            evt.update(utils.get_sku(evt['product_sku_hash']))
         yield session
 
 
@@ -165,9 +168,9 @@ class Candidates:
                 co_counts = co_counts['co_counts']
                 if not evt[trigger_key]: continue
                 url_cands = co_counts.get(evt[trigger_key])
-                if url_cands: 
+                if url_cands:
                     return Counter(dict(url_cands.most_common(n))), source_id
-        
+
         return Counter(), None
 
 
@@ -308,7 +311,7 @@ def binarize(it, should_remove_only_pageviews=True, n_negs=5):
         # negative
         for n in negatives:
             if n == y_i['product_sku_hash']: continue
-            n_sku = cand_features.get_cand_dict(get_sku(n))
+            n_sku = cand_features.get_cand_dict(utils.get_sku(n))
             if not n_sku['description_vector'] or not n_sku['price_bucket']: continue
 
             yield dict(
@@ -328,7 +331,7 @@ def binarize(it, should_remove_only_pageviews=True, n_negs=5):
             x_i=dict(
                 session=x_i,
                 row_id=row_id,
-                candidate=cand_features.get_cand_dict(get_sku(y_i['product_sku_hash'])),
+                candidate=cand_features.get_cand_dict(utils.get_sku(y_i['product_sku_hash'])),
                 source=doc['candidates_source']
             ),
             y_i=True
@@ -345,8 +348,7 @@ def get_split_iter(split_name='train', n_stories=10_000,
                    do_binarize=False, n_negs=5,
                    progress_fn=None, do_filter_seen=False):
     if split_name == 'eval':
-        sigir = fs.join(ETL_PATH, job_name, 'SIGIR-ecom-data-challenge')
-        fname = fs.join(sigir, 'rec_test_phase_1.json')
+        fname = fs.join(sigir_data_dir, 'rec_test_phase_1.json')
 
         with open(fname) as f:
             data = [e['query'] for e in json.load(f)]
@@ -354,7 +356,7 @@ def get_split_iter(split_name='train', n_stories=10_000,
         if n_stories:
             data = data[:n_stories]
     else:
-        path = fs.join(ETL_PATH, job_name, 'SIGIR-ecom-data-challenge/train')
+        path = fs.join(sigir_data_dir, '/train')
         fname = fs.join(path, './sorted_browsing_train.csv')
         data = load_data(fname, n_stories)
         if split_name == 'train':
@@ -392,7 +394,7 @@ class InMemoryMetadata:
     def sync_resources(self):
         if self.meta is not None: return
         all_candidates = {}
-        path = fs.join(ETL_PATH, job_name, 'SIGIR-ecom-data-challenge/train')
+        path = fs.join(sigir_data_dir, 'train')
         with open(fs.join(path, 'sku_to_content.csv')) as f:
             for v in csv.DictReader(f):
                 if not v['description_vector']: continue
@@ -465,7 +467,7 @@ def mrr(model, X, y, n=20, n_stories=None):
     last_print = time()
     inv_ranks = []
     model_was_used = []
-    for doc, target in progress(zip(X, y), tot=len(y), desc='mrr'):
+    for doc, target in tqdm(zip(X, y), tot=len(y), desc='mrr'):
         if len(inv_ranks) == n_stories: break
         if time() - last_print > 300:
             last_print = time()
@@ -556,8 +558,6 @@ def main():
     version = 5  # do not include past events unless strictly necesary
     version = 6  # flatten_with_same_score
     version = 7  # filter seen
-    version = 8  # train_test
-    version = 9  # more coverage, added source_id
 
     train_data = get_split_iter(
         'train', n_cands=args.n_cands, n_stories=args.n_train,

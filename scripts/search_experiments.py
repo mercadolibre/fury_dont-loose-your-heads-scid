@@ -1,27 +1,21 @@
-from sklearn.model_selection import ParameterGrid, train_test_split
-
-from core.env_args_parser import EnvArgsParser
-from core.imports import *
+import numpy as np
+import pickle as pkl
 from itertools import groupby
 
-from core.sigir import search
-from core.sigir import utils
+from tqdm import tqdm
+
+from ..scid.timeit import timeit
+from ..scid import search, utils, fs
+from ..scid.descriptor import PoolingStrategy
+from ..scid.grid_search import load_trials, build_runs_df
+from ..scid.model import MultiTaskLanguageModel, RollingAverageMultiTaskLanguageModel
+from ..scid.settings import sigir_data_dir
+from lightgbm import LGBMClassifier
+from sklearn.metrics import roc_auc_score, average_precision_score
+from sklearn.model_selection import ParameterGrid
 from sklearn.pipeline import make_union, make_pipeline
 
-from sklearn.metrics import roc_auc_score
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
-from core.sigir.descriptor import UserNavDescriptor, PoolingStrategy, CIDDescriptor
-from lightgbm import LGBMClassifier
-from core.sigir.model import MultiTaskLanguageModel, RollingAverageMultiTaskLanguageModel
-from core.sigir.settings import sigir_data_dir
-from core.sigir.grid_search import load_trials, build_runs_df
-from core.time_it import timeit
-from eval_top_models import load_descriptors, get_checkpoints_metrics, get_run_df
-
-from core.time_it import timeit
-from sklearn.metrics import roc_auc_score, average_precision_score
-from lightgbm import LGBMClassifier
+from ..scid.grid_search import load_descriptors
 
 N_ESTIMATORS = 300
 DATA_SIZE = 50_000
@@ -64,18 +58,18 @@ def build_pipe(n_estimators, desc=None, cid_desc=None):
 def main(out_dir, n_stories, n_estimators):
     out_dir = fs.ensure_exists(fs.join(out_dir, f'{n_stories}stories_{n_estimators}estimators'))
 
-    bin_X_train, bin_y_train, bin_X_test, bin_y_test = search.load_data(job_name, censored=False, limit=n_stories)
+    bin_X_train, bin_y_train, bin_X_test, bin_y_test = search.load_data(censored=False, limit=n_stories)
     bin_y_train = np.asarray(bin_y_train)
     bin_y_test = np.asarray(bin_y_test)
 
     if len(bin_y_test) == 0: # muy poca data, es solo para prueba
         print("WARNING!!! TEST CODE")
-        train_data, test_data = search.load_data(job_name, censored=False, limit=10_000, do_binarize=False)
+        train_data, test_data = search.load_data(censored=False, limit=10_000, do_binarize=False)
         bin_X_test = bin_X_train
         bin_y_test = bin_y_train
         test_data = train_data
     else:
-        train_data, test_data = search.load_data(job_name, censored=False, limit=50_000, do_binarize=False)
+        train_data, test_data = search.load_data(censored=False, limit=50_000, do_binarize=False)
 
     cat2vec_fname = fs.join(sigir_data_dir, 'train/cat_avg_desc_emb.pkl')
     gru_runs_df = build_runs_df(load_trials(fs.join(sigir_data_dir, 'trials/gru_smaller_sequences')))
@@ -103,7 +97,7 @@ def main(out_dir, n_stories, n_estimators):
 
     evaluator = Evaluator(bin_X_train, bin_y_train, bin_X_test, bin_y_test, train_data, test_data)
 
-    for config in progress(grid, desc='grid', dyn_pi=False):
+    for config in tqdm(grid, desc='grid', dyn_pi=False):
         if not config['use_hid'] and not config['use_cid']:
             base_name = 'base_model.pkl'
         else:
@@ -128,8 +122,8 @@ def main(out_dir, n_stories, n_estimators):
         pipe = build_pipe(n_estimators, hid, cid)
 
         pipe.fit(bin_X_train, bin_y_train)
-        with timeit('full eval pipe'):
-            stats, stats_input = evaluator.eval_pipe(pipe)
+
+        stats, stats_input = evaluator.eval_pipe(pipe)
 
         with open(stats_fname, 'wb') as f:
             pkl.dump(dict(stats=stats, stats_input=stats_input), f, pkl.HIGHEST_PROTOCOL)

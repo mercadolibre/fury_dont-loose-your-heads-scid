@@ -12,16 +12,6 @@ SIGIR_CONFIG = dict(
     }
 )
 
-MELI_CONFIG = dict(
-    attrs=['domain', 'price', 'title'],
-    tasks=['next_sku', 'purch_sku'],
-    attr_metrics={
-        'domain': ['prec_at_20'],
-        'title': ['prec_at_20'],
-        'price': ['mape'],
-    }
-)
-
 
 def plot_metrics(df, loss_logy, config):
     plt.figure(figsize=(20, 3))

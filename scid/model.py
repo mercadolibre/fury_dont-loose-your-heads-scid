@@ -18,15 +18,12 @@ from torch.optim.lr_scheduler import MultiStepLR
 from torch.utils.data import DataLoader
 from torch.utils.data import WeightedRandomSampler
 
-from core import fs
-from core.models.mlp import LitProgressBar
-from core.serialization import iter_jl
-from core.settings import ETL_PATH
+import fs
+from serialization import iter_jl
 from .data import SessionDataset, BatchCollator
 from .metrics import PriceMetricsAccumulator, RocAUCAccumulator
 from .settings import sigir_data_dir
 from .sku import FrozenEmbedder, AttributeEmbedding
-from ..time_it import timeit
 
 
 class MultiTaskLoss:
@@ -378,8 +375,7 @@ class MultiTaskLanguageModel(LightningModule):
         )
 
         if eval_on_training_set:
-            with timeit('validate on training set'):
-                self.eval_on_training_set()
+            self.eval_on_training_set()
 
     def _step(self, batch):
         batch = self._ensure_batch_on_device(batch)

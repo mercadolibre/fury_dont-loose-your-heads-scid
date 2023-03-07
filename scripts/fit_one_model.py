@@ -1,10 +1,11 @@
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import CSVLogger
 
-from core.imports import *
-from core.sigir.model import RollingAverageMultiTaskLanguageModel
+from ..scid import fs
+from ..scid.settings import sigir_data_dir
+from ..scid.model import RollingAverageMultiTaskLanguageModel
 
-path = fs.join(ETL_PATH, job_name, 'SIGIR-ecom-data-challenge/train')
+path = fs.join(sigir_data_dir, 'train')
 device = 'cuda'
 batch_size = 4000
 

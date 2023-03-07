@@ -1,15 +1,17 @@
 from datetime import datetime
-from core import fs
-from core.progress import progress
-from core.serialization import iter_jl
-from core.settings import ETL_PATH
+
+from tqdm import tqdm
+
+import fs
+from settings import sigir_data_dir
+from serialization import iter_jl
 
 
-def load_data(job_name, limit=None, censored=False, do_binarize=True):
-    path = fs.join(ETL_PATH, job_name, 'SIGIR-ecom-data-challenge/train')
+def load_data(limit=None, censored=False, do_binarize=True):
+    path = fs.join(sigir_data_dir, 'train')
     fname = 'joined_data.jl.gz' if censored else 'joined_data_uncensored.jl.gz'
     it = iter_jl(fs.join(path, fname), limit=limit)
-    data = list(progress(it))
+    data = list(tqdm(it))
 
     train_cut = datetime(2019, 3, 24)
     train_cut_ts = train_cut.timestamp() * 1000

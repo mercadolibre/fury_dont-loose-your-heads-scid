@@ -4,8 +4,8 @@ import torch
 from memoized_property import memoized_property
 from sklearn.metrics import roc_auc_score
 
-from core.nn import FastNN
-from core.time_it import timeit
+from .nn import FastNN
+from .timeit import timeit
 
 
 class EmbIndex:

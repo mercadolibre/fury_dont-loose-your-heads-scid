@@ -1,11 +1,17 @@
-from core.imports import *
 from sklearn.base import BaseEstimator, TransformerMixin
-from core.embeddeddb2 import EmbeddedDB2
 
-path = fs.join(ETL_PATH, job_name, 'SIGIR-ecom-data-challenge/train')
+import fs
+from .embeddeddb import EmbeddedDB
+from .settings import sigir_data_dir
 
-browsing_edb = EmbeddedDB2(fs.join(path, 'browsing_train.edb'), lock=False)
-sku_edb = EmbeddedDB2(fs.join(path, 'sku_to_content.edb'), lock=False)
+path = fs.join(sigir_data_dir, 'train')
+
+browsing_edb = EmbeddedDB(fs.join(path, 'browsing_train.edb'), lock=False)
+sku_edb = EmbeddedDB(fs.join(path, 'sku_to_content.edb'), lock=False)
+
+
+def prefix_dict(p, d, sep='_'):
+    return {f'{p}{sep}{k}': v for k, v in d.items()}
 
 
 def recursive_get(dict_, field):
@@ -158,7 +164,6 @@ class TargetEncoder(BaseEstimator, TransformerMixin):
             for field in self.fields:
                 val = recursive_get(x_i, field)
                 values[field][val].append(y_i)
-
 
         self.values_ = {}
         self.default_value_ = {}
