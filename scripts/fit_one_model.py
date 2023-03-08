@@ -1,16 +1,16 @@
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import CSVLogger
 
-from ..scid import fs
+from scid.utils import fs
 from ..scid.settings import sigir_data_dir
 from ..scid.model import RollingAverageMultiTaskLanguageModel
 
-path = fs.join(sigir_data_dir, 'train')
 device = 'cuda'
 batch_size = 4000
 
 max_epochs = 200
 data_size = 0.25
+path = fs.join(sigir_data_dir, 'train')
 sku_embedder_fname = fs.join(path, 'sku_embeddings_avg_desc.pkl')
 
 hp = {

@@ -3,8 +3,7 @@ EmbeddedDb is a wrapper for lmdb database tool
 """
 import os
 import lmdb
-import ujson as json
-
+import json
 from functools import lru_cache
 
 MAX_READERS_ENV_NAME = "EDB_MAX_READERS"

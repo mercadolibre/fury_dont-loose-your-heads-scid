@@ -7,10 +7,10 @@ from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import CSVLogger
 from sklearn.model_selection import ParameterGrid
 
-import fs
-from .descriptor import UserNavDescriptor, CIDDescriptor
-from .model import MultiTaskLanguageModel, RollingAverageMultiTaskLanguageModel
-from .settings import sigir_data_dir
+from scid.utils import fs
+from scid.descriptor import UserNavDescriptor, CIDDescriptor
+from scid.model import MultiTaskLanguageModel, RollingAverageMultiTaskLanguageModel
+from scid.settings import sigir_data_dir
 
 
 class GridSearch:

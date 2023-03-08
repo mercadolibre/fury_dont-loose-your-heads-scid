@@ -278,8 +278,3 @@ metric_cols = [
     'val_next_sku_price_acc',
     'val_will_purch_auc', 'val_this_purch_auc'
 ]
-
-
-
-
-if __name__ == '__main__': main()

@@ -4,7 +4,7 @@ from itertools import chain
 from sklearn.model_selection import ParameterGrid
 from tqdm import tqdm
 
-from ..scid import fs
+from scid.utils import fs
 
 
 def get_cocount(it, trigger_key, any_order=False, just_next=False):

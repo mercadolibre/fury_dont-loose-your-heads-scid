@@ -18,16 +18,16 @@ from sklearn.pipeline import make_pipeline
 
 from ..scid.descriptor import PoolingStrategy
 
-from ..scid.grid_search import load_trials, build_runs_df
+from scid.model_selections.grid_search import load_trials, build_runs_df
 from ..scid.model import RollingAverageMultiTaskLanguageModel, MultiTaskLanguageModel
 import next_item_prediction as nip
 
 from ..scid.settings import sigir_data_dir
-from ..scid.timeit import timeit
+from scid.utils.timeit import timeit
 from ..scid.utils import prefix_dict
 from cachetools import LRUCache
 
-from ..scid.grid_search import load_descriptors
+from scid.model_selections.grid_search import load_descriptors
 
 
 def get_split_Xy(split_name, n_stories=2000):

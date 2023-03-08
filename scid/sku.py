@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import pickle as pkl
-from .metrics import EmbIndex
+from scid.model.metrics import EmbIndex
 
 
 class AttributeEmbedding:

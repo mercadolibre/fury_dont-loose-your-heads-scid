@@ -12,8 +12,9 @@ from time import time
 from sklearn.pipeline import make_union, make_pipeline
 from tqdm import tqdm
 
+import scid.utils.transformers
 from nip_compute_candidates import get_cache_fname
-from scid import fs
+from scid.utils import fs
 from scid.settings import sigir_data_dir
 from ..scid import utils
 
@@ -525,10 +526,10 @@ def get_features_pipe(*user_descriptors, cocounts=False, cocount_pos_target_enco
              'candidate.normed_co_count', 'candidate.total_co_views', 'source'
         ])
 
-    steps = [utils.VectorProjector(fields)]
+    steps = [scid.utils.transformers.VectorProjector(fields)]
     steps.extend(user_descriptors)
     if cocount_pos_target_encoder:
-        steps.append(utils.TargetEncoder(['candidate.co_count_pos']))
+        steps.append(scid.utils.transformers.TargetEncoder(['candidate.co_count_pos']))
 
     return make_union(*steps)
 

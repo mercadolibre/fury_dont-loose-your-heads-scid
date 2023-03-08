@@ -2,9 +2,9 @@ from datetime import datetime
 
 from tqdm import tqdm
 
-import fs
+from scid.utils import fs
 from settings import sigir_data_dir
-from serialization import iter_jl
+from scid.utils.serialization import iter_jl
 
 
 def load_data(limit=None, censored=False, do_binarize=True):

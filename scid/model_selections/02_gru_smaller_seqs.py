@@ -1,6 +1,6 @@
 from sklearn.model_selection import ParameterGrid
 
-from ..grid_search import GRUGridSearch
+from scid.model_selections.grid_search import GRUGridSearch
 
 grid = ParameterGrid(dict(
     item_adapter_depth=[0, 1],

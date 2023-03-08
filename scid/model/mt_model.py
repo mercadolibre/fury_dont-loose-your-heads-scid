@@ -7,6 +7,7 @@ from time import time
 import numpy as np
 import torch
 import torch.nn.functional as F
+from core.models.mlp import LitProgressBar
 from memoized_property import memoized_property
 from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint, LearningRateMonitor
@@ -18,12 +19,12 @@ from torch.optim.lr_scheduler import MultiStepLR
 from torch.utils.data import DataLoader
 from torch.utils.data import WeightedRandomSampler
 
-import fs
-from serialization import iter_jl
-from .data import SessionDataset, BatchCollator
-from .metrics import PriceMetricsAccumulator, RocAUCAccumulator
-from .settings import sigir_data_dir
-from .sku import FrozenEmbedder, AttributeEmbedding
+from scid.utils import fs
+from scid.utils.serialization import iter_jl
+from scid.model.data import SessionDataset, BatchCollator
+from scid.model.metrics import PriceMetricsAccumulator, RocAUCAccumulator
+from scid.settings import sigir_data_dir
+from scid.sku import FrozenEmbedder, AttributeEmbedding
 
 
 class MultiTaskLoss:

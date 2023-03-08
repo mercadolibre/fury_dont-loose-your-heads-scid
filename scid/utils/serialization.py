@@ -2,7 +2,7 @@ import gzip
 import os
 import tempfile
 import json
-import fs
+from scid.utils import fs
 
 
 class iter_jl:
