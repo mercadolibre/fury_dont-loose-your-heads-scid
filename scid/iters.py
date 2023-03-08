@@ -7,10 +7,8 @@ from .utils import fs
 from .utils.embeddeddb import EmbeddedDB
 from .settings import sigir_data_dir
 
-path = fs.join(sigir_data_dir, 'train')
-
-browsing_edb = EmbeddedDB(fs.join(path, 'browsing_train.edb'), lock=False)
-sku_edb = EmbeddedDB(fs.join(path, 'sku_to_content.edb'), lock=False)
+browsing_edb = EmbeddedDB(fs.join(sigir_data_dir, 'browsing_train.edb'), lock=False)
+sku_edb = EmbeddedDB(fs.join(sigir_data_dir, 'sku_to_content.edb'), lock=False)
 
 
 def prefix_dict(p, d, sep='_'):

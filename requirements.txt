@@ -1,0 +1,17 @@
+--find-links https://download.pytorch.org/whl/torch_stable.html
+
+-e .
+scann==1.2.3
+torch==1.8.0+cu101
+seaborn
+lightgbm==3.2.1
+matplotlib>=3.3.0
+cachetools==4.2.2
+
+pydot==1.4.2
+
+memoized-property==1.0.3
+pandas>=1.1.5
+mmh3==3.0.0
+
+pytorch-lightning<1.7.0

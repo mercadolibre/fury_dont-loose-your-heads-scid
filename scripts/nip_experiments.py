@@ -16,15 +16,15 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 
 from sklearn.pipeline import make_pipeline
 
-from ..scid.descriptor import PoolingStrategy
+from scid.descriptor import PoolingStrategy
 
 from scid.model_selections.grid_search import load_trials, build_runs_df
-from ..scid.model import RollingAverageMultiTaskLanguageModel, MultiTaskLanguageModel
+from scid.model.mt_model import RollingAverageMultiTaskLanguageModel, MultiTaskLanguageModel
 import next_item_prediction as nip
 
-from ..scid.settings import sigir_data_dir
+from scid.settings import sigir_data_dir
 from scid.utils.timeit import timeit
-from ..scid.utils import prefix_dict
+from scid.iters import prefix_dict
 from cachetools import LRUCache
 
 from scid.model_selections.grid_search import load_descriptors

@@ -7,10 +7,9 @@ from time import time
 import numpy as np
 import torch
 import torch.nn.functional as F
-from core.models.mlp import LitProgressBar
 from memoized_property import memoized_property
 from pytorch_lightning import LightningModule
-from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint, LearningRateMonitor
+from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint, LearningRateMonitor, ProgressBarBase
 from sklearn.model_selection import train_test_split
 from torch import nn
 from torch.nn import GRU, Parameter
@@ -20,6 +19,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data import WeightedRandomSampler
 
 from scid.utils import fs
+from scid.utils.progress import progress
 from scid.utils.serialization import iter_jl
 from scid.model.data import SessionDataset, BatchCollator
 from scid.model.metrics import PriceMetricsAccumulator, RocAUCAccumulator
@@ -430,11 +430,10 @@ class MultiTaskLanguageModel(LightningModule):
         return tr_data, val_data
 
     def get_data_fname(self):
-        path = fs.join(sigir_data_dir, 'train')
         if self.data_version == 0:
-            fname = fs.join(path, 'tr_encoded_data.jl')
+            fname = fs.join(sigir_data_dir, 'tr_encoded_data.jl')
         else:
-            fname = fs.join(path, f'tr_encoded_data_v{self.data_version}.jl')
+            fname = fs.join(sigir_data_dir, f'tr_encoded_data_v{self.data_version}.jl')
         return fname
 
     def _subsample(self, data):
@@ -513,3 +512,31 @@ def make_head(in_dim, out_dim, device, n_layers):
     # steps.append(nn.LayerNorm(in_dim))
     steps.append(nn.Linear(in_dim, out_dim))
     return nn.Sequential(*steps).to(device)
+
+
+class LitProgressBar(ProgressBarBase):
+    def __init__(self):
+        super().__init__()  # don't forget this :)
+        self.enabled = True
+        self.it_progress = self.progress = None
+
+    def disable(self):
+        self.enabled = False
+
+    def enable(self):
+        self.enabled = True
+
+    def on_train_epoch_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+        super().on_epoch_start(trainer, pl_module)
+        if self.progress is None:
+            self.progress = progress(range(trainer.max_epochs), desc='train', dyn_pi=False)
+            self.it_progress = iter(self.progress)
+
+        self.progress.set_custom_msg(', '.join(f'{k}: {v:.04f}' for k, v in trainer.progress_bar_metrics.items()))
+        next(self.it_progress)
+
+    def on_fit_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+        if getattr(self.progress, 'i', 0) < self.progress.tot or True:
+            txt = ', '.join(f'{k}: {v:.04f}' for k, v in trainer.progress_bar_metrics.items())
+            self.progress.print_finish_iteration(txt)
+

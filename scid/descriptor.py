@@ -7,7 +7,7 @@ import torch
 from sklearn.base import TransformerMixin, BaseEstimator
 from torch.nn.utils.rnn import pad_sequence, pad_packed_sequence, pack_padded_sequence
 
-from .model import MultiTaskLanguageModel
+from .model.mt_model import MultiTaskLanguageModel
 
 
 class InPlaceEmbedder:

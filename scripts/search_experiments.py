@@ -2,16 +2,16 @@ import numpy as np
 import pickle as pkl
 from itertools import groupby
 
+from core.sigir.utils import VectorProjector
 from tqdm import tqdm
 
-import scid.utils.transformers
 from scid.utils.timeit import timeit
-from ..scid import search
+from scid import search
 from scid.utils import fs
-from ..scid.descriptor import PoolingStrategy
+from scid.descriptor import PoolingStrategy
 from scid.model_selections.grid_search import load_trials, build_runs_df
-from ..scid.model import MultiTaskLanguageModel, RollingAverageMultiTaskLanguageModel
-from ..scid.settings import sigir_data_dir
+from scid.model.mt_model import MultiTaskLanguageModel, RollingAverageMultiTaskLanguageModel
+from scid.settings import sigir_data_dir
 from lightgbm import LGBMClassifier
 from sklearn.metrics import roc_auc_score, average_precision_score
 from sklearn.model_selection import ParameterGrid
@@ -45,8 +45,8 @@ def lgbm_factory(n_estimators):
 
 def build_pipe(n_estimators, desc=None, cid_desc=None):
     steps = [
-        scid.utils.transformers.VectorProjector('candidate.description_vector'),
-        scid.utils.transformers.VectorProjector('query_vector'),
+        VectorProjector('candidate.description_vector'),
+        VectorProjector('query_vector'),
     ]
     if desc is not None: steps.append(desc)
     if cid_desc is not None: steps.append(cid_desc)

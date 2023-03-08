@@ -1,4 +1,5 @@
 import os
+from scid.utils import fs
 
-sigir_data_dir = os.path.join('SIGIR-ecom-data-challenge')
-trials_dir = os.path.join(sigir_data_dir, 'trials')
+ref_path = os.path.abspath(fs.join(os.path.dirname(__file__), '..'))
+sigir_data_dir = os.path.join(ref_path, 'SIGIR-ecom-data-challenge/train')

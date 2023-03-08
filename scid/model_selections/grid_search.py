@@ -9,7 +9,7 @@ from sklearn.model_selection import ParameterGrid
 
 from scid.utils import fs
 from scid.descriptor import UserNavDescriptor, CIDDescriptor
-from scid.model import MultiTaskLanguageModel, RollingAverageMultiTaskLanguageModel
+from scid.model.mt_model import MultiTaskLanguageModel, RollingAverageMultiTaskLanguageModel
 from scid.settings import sigir_data_dir
 
 
